@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant Requester as ผู้ขอ
+    participant Reviewer as ผู้ตรวจสอบ
+    participant System as Donate System
+    participant Payment as PSAistudio/Payment
+    participant Admin as Admin Dashboard
+
+    Requester->>System: สร้าง session (คำขอ)
+    System->>Reviewer: แจ้งผู้ตรวจสอบ
+    Reviewer->>System: อนุมัติ / ปฏิเสธ
+    alt อนุมัติ
+      System->>Payment: สร้าง payment request
+      Payment-->>System: ส่งผลการชำระ (callback)
+      System->>Admin: อัพเดต session เป็น complete
+    else ปฏิเสธ
+      System->>Requester: แจ้งผลปฏิเสธ
+    end
