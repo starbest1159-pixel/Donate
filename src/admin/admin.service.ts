@@ -200,4 +200,107 @@ export class AdminService {
       limit,
     };
   }
+
+  // ── Multi-tenant master admin operations ──────────────────────────
+
+  async findMasterAdminByEmail(email: string) {
+    return this.prisma.masterAdmin.findUnique({
+      where: { email },
+    });
+  }
+
+  async listMerchants(filters?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+  }) {
+    const page = filters?.page ?? 1;
+    const limit = filters?.limit ?? 10;
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = {};
+    if (filters?.status) {
+      where.status = filters.status;
+    }
+
+    const [merchants, total] = await Promise.all([
+      this.prisma.merchant.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.merchant.count({ where }),
+    ]);
+
+    return {
+      data: merchants,
+      total,
+      page,
+      limit,
+    };
+  }
+
+  async suspendMerchant(merchantId: string) {
+    const merchant = await this.prisma.merchant.findUnique({
+      where: { id: merchantId },
+    });
+    if (!merchant) {
+      throw new Error('Merchant not found');
+    }
+
+    const currentVersion = merchant.version;
+    const result = await this.prisma.merchant.updateMany({
+      where: { id: merchantId, version: currentVersion },
+      data: { status: 'SUSPENDED', version: { increment: 1 } },
+    });
+    if (result.count === 0) {
+      throw new Error('OPTIMISTIC_LOCK_ERROR');
+    }
+
+    this.logger.log(`Merchant ${merchantId} suspended`);
+    return this.prisma.merchant.findUnique({ where: { id: merchantId } });
+  }
+
+  async terminateMerchant(merchantId: string) {
+    const merchant = await this.prisma.merchant.findUnique({
+      where: { id: merchantId },
+    });
+    if (!merchant) {
+      throw new Error('Merchant not found');
+    }
+
+    const currentVersion = merchant.version;
+    const result = await this.prisma.merchant.updateMany({
+      where: { id: merchantId, version: currentVersion },
+      data: { status: 'TERMINATED', version: { increment: 1 } },
+    });
+    if (result.count === 0) {
+      throw new Error('OPTIMISTIC_LOCK_ERROR');
+    }
+
+    this.logger.log(`Merchant ${merchantId} terminated`);
+    return this.prisma.merchant.findUnique({ where: { id: merchantId } });
+  }
+
+  async activateMerchant(merchantId: string) {
+    const merchant = await this.prisma.merchant.findUnique({
+      where: { id: merchantId },
+    });
+    if (!merchant) {
+      throw new Error('Merchant not found');
+    }
+
+    const currentVersion = merchant.version;
+    const result = await this.prisma.merchant.updateMany({
+      where: { id: merchantId, version: currentVersion },
+      data: { status: 'ACTIVE', version: { increment: 1 } },
+    });
+    if (result.count === 0) {
+      throw new Error('OPTIMISTIC_LOCK_ERROR');
+    }
+
+    this.logger.log(`Merchant ${merchantId} activated`);
+    return this.prisma.merchant.findUnique({ where: { id: merchantId } });
+  }
 }
