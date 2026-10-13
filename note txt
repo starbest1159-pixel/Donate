@@ -1,0 +1,28 @@
+src/
+  main.ts                      # Nest bootstrap, global pipes, interceptors
+  app.module.ts                # Module composition (Config, Prisma, Cache, Schedule)
+  auth/                        # Auth module (JWT/Passport) — registration/login
+  members/                     # Members service/controllers/entities
+  payment-methods/             # Payment method management
+  contributions/               # Contribution request lifecycle (create/list/cancel)
+  sessions/                    # QR / session management (qr_sessions, TTL)
+  scheduler/                   # Expiry cron / cleanup tasks
+  logs/                        # Activity logging + interceptor
+  database/                    # Prisma/DB wiring (PrismaModule / service)
+  common/                      # Filters, interceptors, pipes, decorators, interfaces
+  admin/, dashboard/, etc.     # Admin/dashboard endpoints and utilities
+prisma/
+  schema.prisma                # DB schema for members, contribution_requests, qr_sessions, etc.
+docs/
+  (architecture + user guide + run instructions + diagrams)
+# install
+npm install
+
+# generate prisma client
+npm run prisma:generate
+
+# run migrations (dev)
+npm run prisma:migrate
+
+# start in dev
+npm run start:dev
